@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <numeric>
+#include <stdexcept>
 
 using namespace std;
 
@@ -19,24 +21,62 @@ void provedTah(vector<vector<int>> &veze, Tah tah) {
 }
 
 
-void hanoi(int n, char z, char pomocny, char cil, vector<vector<int>> &veze, vector<Tah> &tahy) {
+void hanoi(int n, char z, char pomocny, char cil, vector<vector<int>> &veze, vector<Tah> &tahy) { 
     if (n <= 0) return;
+
+    if (veze.empty()) {
+        cerr << "vektor disku je prazdny" << endl;
+        return;
+    }
+
+    int pocet_vsech_disku = accumulate(veze.begin(), veze.end(), 0, [](int suma, const vector<int> &vez) {
+        return suma + vez.size();
+    });
+
+    if (pocet_vsech_disku < n) {
+        cerr << "nedostatek disku" << endl;
+        tahy.push_back({});
+        return;
+    }
+
+    if (n == 1) {
+        try {
+            Tah tah;
+            tah.disk = veze[z - 'A'].back();
+            tah.z = z;
+            tah.na = cil;
+            tah.stavVezi = veze;
+
+            provedTah(veze, tah);
+            tah.stavVezi = veze;
+            tahy.push_back(tah);
+        } catch (const invalid_argument &e) {
+            cerr << "Nelze provést tah: " << e.what() << endl;
+        }
+        return;
+    }
+
     hanoi(n - 1, z, cil, pomocny, veze, tahy);
-    
-    Tah tah;
-    tah.disk = n;
-    tah.z = z;
-    tah.na = cil;
-    tah.stavVezi = veze; 
-    provedTah(veze, tah);
-    tah.stavVezi = veze; 
-    tahy.push_back(tah);
+
+    try {
+        Tah tah;
+        tah.disk = veze[z - 'A'].back();
+        tah.z = z;
+        tah.na = cil;
+        tah.stavVezi = veze;
+
+        provedTah(veze, tah);
+        tah.stavVezi = veze;
+        tahy.push_back(tah);
+    } catch (const invalid_argument &e) {
+        cerr << "Nelze provést tah: " << e.what() << endl;
+    }
 
     hanoi(n - 1, pomocny, z, cil, veze, tahy);
 }
 
 
-void zobrazVeze(vector<vector<int>> &veze) {
+void zobrazVeze(vector<vector<int>> &veze){
     int maxHeight = 0;
     for (const auto &vez : veze) {
         if (vez.size() > maxHeight) {
